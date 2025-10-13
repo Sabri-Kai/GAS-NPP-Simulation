@@ -529,7 +529,7 @@ bool FSyncedNotifyDataArray::IsNotifyTriggered(const int32& PredictedNotifyIndex
 		&& ActiveNotifySyncStates[PredictedNotifyIndex].IsActive;
 }
 
-bool FSyncedNotifyDataArray::ShouldNotifyTriggerThisFrame(UAnimMontage*Montage,const int32& InIndex, const float InCurrentTime , const float InPreviousTime)
+bool FSyncedNotifyDataArray::ShouldNotifyTriggerThisFrame(UAnimMontage*Montage,const int32& InIndex, const float PostTickTime , const float StartTickTime)
 {
 	if (!IsValidStateIndex(InIndex))
 	{
@@ -542,8 +542,8 @@ bool FSyncedNotifyDataArray::ShouldNotifyTriggerThisFrame(UAnimMontage*Montage,c
 	{
 		return false;
 	}
-	const int32 CurrentTimeMS = FMath::Floor(InCurrentTime * 1000.f);
-	const int32 PreviousTimeMS = FMath::Floor(InPreviousTime * 1000.f);
+	const int32 CurrentTimeMS = FMath::Floor(PostTickTime * 1000.f);
+	const int32 PreviousTimeMS = FMath::Floor(StartTickTime * 1000.f);
 	const int32 TriggerTimeMS = FMath::Floor(NotifyEvent->GetTriggerTime() * 1000.f);
 	const int32 EndTriggerTimeMS = FMath::Floor(NotifyEvent->GetEndTriggerTime() * 1000.f);
 	if (IsNotifyState(*NotifyEvent))
@@ -564,7 +564,7 @@ bool FSyncedNotifyDataArray::ShouldNotifyTriggerThisFrame(UAnimMontage*Montage,c
 	return false;
 }
 
-bool FSyncedNotifyDataArray::ShouldNotifyEndThisFrame(UAnimMontage* Montage,const int32& InIndex, const float InCurrentTime, const float DeltaSeconds)
+bool FSyncedNotifyDataArray::ShouldNotifyEndThisFrame(UAnimMontage* Montage,const int32& InIndex, const float PostTickTime)
 {
 	if (!IsValidStateIndex(InIndex))
 	{
@@ -580,7 +580,7 @@ bool FSyncedNotifyDataArray::ShouldNotifyEndThisFrame(UAnimMontage* Montage,cons
 	// ONLY notify state have end event
 	// if notify state we should End  this frame in 1 situation
 	// 1 - if triggered is already true we just trigger end as long as our current time outside the state.
-	const int32 CurrentTimeMS = FMath::Floor(InCurrentTime * 1000.f);
+	const int32 CurrentTimeMS = FMath::Floor(PostTickTime * 1000.f);
 	const int32 TriggerTimeMS = FMath::Floor(NotifyEvent->GetTriggerTime() * 1000.f);
 	const int32 EndTriggerTimeMS = FMath::Floor(NotifyEvent->GetEndTriggerTime() * 1000.f);
 	if (IsNotifyState(*NotifyEvent))
@@ -593,7 +593,7 @@ bool FSyncedNotifyDataArray::ShouldNotifyEndThisFrame(UAnimMontage* Montage,cons
 	return false;
 }
 
-bool FSyncedNotifyDataArray::ShouldNotifyTickThisFrame(UAnimMontage* Montage,const int32& InIndex, const float InCurrentTime)
+bool FSyncedNotifyDataArray::ShouldNotifyTickThisFrame(UAnimMontage* Montage,const int32& InIndex, const float StartTickTime)
 {
 	if (!IsValidStateIndex(InIndex))
 	{
@@ -608,7 +608,7 @@ bool FSyncedNotifyDataArray::ShouldNotifyTickThisFrame(UAnimMontage* Montage,con
 		return false;
 	}
 	// ONLY notify state have Tick event
-	const int32 CurrentTimeMS = FMath::Floor(InCurrentTime * 1000.f);
+	const int32 CurrentTimeMS = FMath::Floor(StartTickTime * 1000.f);
 	const int32 TriggerTimeMS = FMath::Floor(NotifyEvent->GetTriggerTime() * 1000.f);
 	const int32 EndTriggerTimeMS = FMath::Floor(NotifyEvent->GetEndTriggerTime() * 1000.f);
 	if (IsNotifyState(*NotifyEvent))

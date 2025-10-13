@@ -329,9 +329,9 @@ struct ABILITYSYSTEMSIMULATION_API FSyncedNotifyDataArray
 	bool IsNotifyStateAtIndex(UAnimMontage* Montage,const int32& PredictedNotifyIndex) const;
 	static bool IsNotifyState(const FAnimNotifyEvent& NotifyEvent);
 	bool IsNotifyTriggered(const int32& PredictedNotifyIndex);
-	bool ShouldNotifyTriggerThisFrame(UAnimMontage* Montage,const int32& InIndex, const float InCurrentTime , const float InPreviousTime);
-	bool ShouldNotifyEndThisFrame(UAnimMontage* Montage,const int32& InIndex, const float InCurrentTime, const float DeltaSeconds);
-	bool ShouldNotifyTickThisFrame(UAnimMontage* Montage,const int32& InIndex, const float InCurrentTime);
+	bool ShouldNotifyTriggerThisFrame(UAnimMontage* Montage,const int32& InIndex, const float PostTickTime , const float StartTickTime);
+	bool ShouldNotifyEndThisFrame(UAnimMontage* Montage,const int32& InIndex, const float PostTickTime);
+	bool ShouldNotifyTickThisFrame(UAnimMontage* Montage,const int32& InIndex, const float StartTickTime);
 	bool SetupDataForNotifyAtIndex(UAnimMontage* Montage,const int32& Index);
 	FORCEINLINE static UObject* GetNotifyObject(const FAnimNotifyEvent& NotifyEvent)
 	{
@@ -390,7 +390,7 @@ struct ABILITYSYSTEMSIMULATION_API FSimTickNotifyData
 	float NotifyEndTime = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=NotifyState)
-	float CurrentMontageTime = 0.f;
+	float NotifyTickStartTime = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=NotifyState)
 	float CurrentSimTimeMS = 0.f;

@@ -570,13 +570,18 @@ void UNetMontageSimulator::TickSyncedNotifies(const float& MontageStepTime,const
 	InputData.MontagePlayer = this;
 	// since notifies tick after advancing the montage , let's try using previous time for them if it's less than current time
 	// previous time would be higher than current only in a loop situation
+	
+	// ToDo : Setting the time notifies will start ticking from (time before the animation pose was advance ei previous time)
+	// to current time , in the case of loop is a naive implementation, in truth we should keep tack of the section we looped on
+	// and do sub-tick for the : (Section end - pre-advance time) and (Post-Advance time - Section Start)
+	// handled outside in AdvanceMontage so this function always gets a proper previous and current times.
 	if (PreviousTime < SyncOutput.GetCurrentTime())
 	{
-		InputData.CurrentMontageTime = PreviousTime;
+		InputData.NotifyTickStartTime = PreviousTime;
 	}
 	else
 	{
-		InputData.CurrentMontageTime = SyncOutput.GetCurrentTime();
+		InputData.NotifyTickStartTime = SyncOutput.GetCurrentTime();
 	}
 	InputData.CurrentSimTimeMS = TimeStep.BaseSimTimeMs;
 	const FSyncedNotifiesArray AnimNotifies(SyncOutput.GetPlayingMontage());
@@ -595,9 +600,9 @@ void UNetMontageSimulator::TickSyncedNotifies(const float& MontageStepTime,const
 		if (SyncOutput.NotifySyncStates.IsNotifyState(NotifyEvent))
 		{
 			// by clamping the time we also clamp the delta time.
-			const float TimeAfterAdvance = FMath::Clamp(InputData.CurrentMontageTime + InputData.DeltaSeconds,
+			const float TimeAfterAdvance = FMath::Clamp(InputData.NotifyTickStartTime + InputData.DeltaSeconds,
 				NotifyEvent.GetTriggerTime(), NotifyEvent.GetEndTriggerTime());
-			InputData.DeltaSeconds = TimeAfterAdvance - InputData.CurrentMontageTime;
+			InputData.DeltaSeconds = TimeAfterAdvance - InputData.NotifyTickStartTime;
 		}
 		InputData.NotifyStartTime = NotifyEvent.GetTriggerTime();
 		InputData.NotifyEndTime = NotifyEvent.GetEndTriggerTime();
@@ -617,7 +622,7 @@ void UNetMontageSimulator::TickSyncedNotifies(const float& MontageStepTime,const
 				OutputData.SharedNotifyDataState = SyncState.SyncStatePointer->CloneShared();
 			}
 		}
-		if (SyncOutput.NotifySyncStates.ShouldNotifyTriggerThisFrame(SyncOutput.GetPlayingMontage(),i, InputData.CurrentMontageTime, PreviousTime))
+		if (SyncOutput.NotifySyncStates.ShouldNotifyTriggerThisFrame(SyncOutput.GetPlayingMontage(),i, SyncOutput.GetCurrentTime(), InputData.NotifyTickStartTime))
 		{
 			//Set Triggered Flag To false
 			FSyncedNotifyDataContainer& SyncState = SyncOutput.NotifySyncStates[i];
@@ -640,13 +645,13 @@ void UNetMontageSimulator::TickSyncedNotifies(const float& MontageStepTime,const
 			}
 		}
 		// Triggered This frame , So Called triggered Then Tick , we still want to tick on first frame
-		if (SyncOutput.NotifySyncStates.ShouldNotifyTickThisFrame(SyncOutput.GetPlayingMontage(),i, InputData.CurrentMontageTime)
+		if (SyncOutput.NotifySyncStates.ShouldNotifyTickThisFrame(SyncOutput.GetPlayingMontage(),i, InputData.NotifyTickStartTime)
 			&& ISyncedNotifyInterface::Execute_CanTick(NotifyObject))
 		{
 			//ToDo @Kai : Bring The Cycle Counter Back
 			//SCOPE_CYCLE_COUNTER(STAT_NetMontagePlayer_Notifies_Tick);
 			// clamp delta time so it is max to end of notify
-			const int32 MaxTickDeltaMS = FMath::RoundToInt32(NotifyEvent.GetEndTriggerTime() * 1000.f) -  FMath::RoundToInt32(InputData.CurrentMontageTime * 1000.f);
+			const int32 MaxTickDeltaMS = FMath::RoundToInt32(NotifyEvent.GetEndTriggerTime() * 1000.f) -  FMath::RoundToInt32(InputData.NotifyTickStartTime * 1000.f);
 			const int32 DeltaSecondsMS = FMath::RoundToInt32(InputData.DeltaSeconds * 1000.f);
 			InputData.DeltaSeconds = FMath::Clamp(DeltaSecondsMS, 0.f, MaxTickDeltaMS) / 1000.f;
 			// call the interface
@@ -660,13 +665,13 @@ void UNetMontageSimulator::TickSyncedNotifies(const float& MontageStepTime,const
 		}
 
 		// Triggered This frame , So Called triggered Then Tick , we still want to tick on first frame
-		if (SyncOutput.NotifySyncStates.ShouldNotifyEndThisFrame(SyncOutput.GetPlayingMontage(),i, InputData.CurrentMontageTime, InputData.DeltaSeconds))
+		if (SyncOutput.NotifySyncStates.ShouldNotifyEndThisFrame(SyncOutput.GetPlayingMontage(),i, SyncOutput.GetCurrentTime()))
 		{
 			//SCOPE_CYCLE_COUNTER(STAT_NetMontagePlayer_Notifies_End);
 			//Set Triggered Flag To True
 			SyncOutput.NotifySyncStates[i].IsActive = false;
 			// clamp delta time so it is max to end of notify
-			const float MaxTickDelta = NotifyEvent.GetEndTriggerTime() - InputData.CurrentMontageTime;
+			const float MaxTickDelta = NotifyEvent.GetEndTriggerTime() - InputData.NotifyTickStartTime;
 			InputData.DeltaSeconds = FMath::Clamp(InputData.DeltaSeconds, 0.f, MaxTickDelta);
 			ISyncedNotifyInterface::Execute_SimulationEnd(NotifyObject, TimeStep.bIsResimulating, InputData, OutputData);
 
@@ -700,7 +705,7 @@ void UNetMontageSimulator::EndSyncedNotifies(const FAbilitySystemTimeStep& TimeS
 		InputData.AnimMontage = State.GetPlayingMontage();
 		InputData.MontagePlayer = this;
 		// make sure current time doesn't exceed montage time
-		InputData.CurrentMontageTime = FMath::Min(State.GetCurrentTime(), State.GetPlayingMontage()->GetPlayLength());
+		InputData.NotifyTickStartTime = FMath::Min(State.GetCurrentTime(), State.GetPlayingMontage()->GetPlayLength());
 		InputData.DeltaSeconds = DeltaSeconds;
 		InputData.CurrentSimTimeMS = TimeStep.BaseSimTimeMs;
 		const FSyncedNotifiesArray AnimNotifies(State.GetPlayingMontage());

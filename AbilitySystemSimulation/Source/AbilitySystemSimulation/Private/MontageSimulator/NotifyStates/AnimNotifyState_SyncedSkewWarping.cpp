@@ -165,13 +165,13 @@ FTransform USyncedSkewWarpingProcessor::ProcessRootMotion(float DeltaSeconds, co
 	FTransform FinalRootMotion = InRootMotion;
 
 	const FTransform RootMotionTotalInState = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.NotifyStartTime, SimInput.NotifyEndTime);
-	const FTransform RootMotionTotal = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.CurrentMontageTime, SimInput.NotifyEndTime);
-	const FTransform RootMotionDelta = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.CurrentMontageTime, FMath::Min(SimInput.CurrentMontageTime + SimInput.DeltaSeconds, SimInput.NotifyEndTime));
+	const FTransform RootMotionTotal = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.NotifyTickStartTime, SimInput.NotifyEndTime);
+	const FTransform RootMotionDelta = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.NotifyTickStartTime, FMath::Min(SimInput.NotifyTickStartTime + SimInput.DeltaSeconds, SimInput.NotifyEndTime));
 	FTransform ExtraRootMotion = FTransform::Identity;
 	
-	if (SimInput.CurrentMontageTime > SimInput.NotifyEndTime)
+	if (SimInput.NotifyTickStartTime > SimInput.NotifyEndTime)
 	{
-		ExtraRootMotion = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.NotifyEndTime, SimInput.CurrentMontageTime);
+		ExtraRootMotion = UMotionWarpingUtilities::ExtractRootMotionFromAnimation(SimInput.AnimMontage, SimInput.NotifyEndTime, SimInput.NotifyTickStartTime);
 	}
 	const FTransform ActorTransform = MoverComp->GetUpdatedComponentTransform();
 	const FTransform MeshRelativeTransform = Asc->GetMeshRelativeTransform();
@@ -215,7 +215,7 @@ FTransform USyncedSkewWarpingProcessor::ProcessRootMotion(float DeltaSeconds, co
 			}
 			else
 			{
-				float Alpha = FMath::Clamp((SimInput.CurrentMontageTime - SimInput.NotifyStartTime) / (SimInput.NotifyEndTime - SimInput.NotifyStartTime), 0.f, 1.f);
+				float Alpha = FMath::Clamp((SimInput.NotifyTickStartTime - SimInput.NotifyStartTime) / (SimInput.NotifyEndTime - SimInput.NotifyStartTime), 0.f, 1.f);
 				Alpha = FAlphaBlend::AlphaToBlendOption(Alpha, AddTranslationEasingFunc, AddTranslationEasingCurve);
 				const FVector NextLocation = FMath::Lerp<FVector, float>(SnappingSyncData->StartLocation, TargetTransform.GetLocation(), Alpha);
 				FVector FinalDeltaTranslation = (NextLocation - CurrentLocation);
@@ -307,7 +307,7 @@ FQuat USyncedSkewWarpingProcessor::WarpRotation(float DeltaSeconds, const FQuat&
 	FQuat FinalTargetRot = CurrentRotation.Inverse() * (TargetRotation * MeshRotationOffset);
 
 	const FQuat TotalRootMotionRotation = RootMotionTotal.GetRotation();
-	const float TimeRemaining = (SimInput.NotifyEndTime - SimInput.CurrentMontageTime) * WarpRotationTimeMultiplier;
+	const float TimeRemaining = (SimInput.NotifyEndTime - SimInput.NotifyTickStartTime) * WarpRotationTimeMultiplier;
 	const float Alpha = FMath::Clamp(DeltaSeconds / TimeRemaining, 0.f, 1.f);
 	FQuat TargetRotThisFrame = FQuat::Slerp(TotalRootMotionRotation, FinalTargetRot, Alpha);
 

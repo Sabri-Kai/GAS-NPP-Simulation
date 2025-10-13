@@ -36,7 +36,7 @@ struct FProcessorSetupData
 		, AnimMontage(InSimInput.AnimMontage)
 		, NotifyStartTime(InSimInput.NotifyStartTime)
 		, NotifyEndTime(InSimInput.NotifyEndTime)
-		, CurrentMontageTime(InSimInput.CurrentMontageTime)	 
+		, CurrentMontageTime(InSimInput.NotifyTickStartTime)	 
 	{
 		
 	}
