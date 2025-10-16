@@ -246,7 +246,7 @@ void UAbilitySimulationLibrary::NetDeltaSerializeUniqueActorsArrays(const FNetSe
 	{
 		Delta = ComputeDelta(BaseArray,Actors);
 	}
-	bool bHasNew = Params.Ar.IsSaving() ? Params.Ar,Delta.ActorsToAdd.Num() > 0 : false;
+	bool bHasNew = Params.Ar.IsSaving() ? Delta.ActorsToAdd.Num() > 0 : false;
 	Params.Ar.SerializeBits(&bHasNew,1);
 	if (bHasNew)
 	{
@@ -256,7 +256,7 @@ void UAbilitySimulationLibrary::NetDeltaSerializeUniqueActorsArrays(const FNetSe
 	{
 		Delta.ActorsToAdd.Empty();
 	}
-	bool bHasToRemove = Params.Ar.IsSaving() ? Params.Ar,Delta.RemovalIndices.Num() > 0 : false;
+	bool bHasToRemove = Params.Ar.IsSaving() ? Delta.RemovalIndices.Num() > 0 : false;
 	Params.Ar.SerializeBits(&bHasToRemove,1);
 	if (bHasToRemove)
 	{

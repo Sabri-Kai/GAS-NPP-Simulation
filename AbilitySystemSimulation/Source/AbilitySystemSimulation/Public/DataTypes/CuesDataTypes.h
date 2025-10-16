@@ -11,6 +11,7 @@
 struct FActiveEffectSyncDataContainer;
 struct FActiveGameplayEffectsContainer;
 struct FNetSerializeParams;
+class UNpAbilitySystemComponent;
 
 /**
  * Cues Executions: These are replicated structs in RPCs that mirror ability system component original RPCs

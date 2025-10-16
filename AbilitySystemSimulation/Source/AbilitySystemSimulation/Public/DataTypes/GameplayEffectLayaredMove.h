@@ -8,6 +8,7 @@
 #include "GameplayEffectLayaredMove.generated.h"
 
 class UCurveVector;
+class UNpAbilitySystemComponent;
 /**
  *  This Layared Move is a special move that required Np Ability System Component
  *  It is applied using a Gameplay Effect Component and will only do something if effect allows it

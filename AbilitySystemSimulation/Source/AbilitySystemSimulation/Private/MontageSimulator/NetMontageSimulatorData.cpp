@@ -66,7 +66,7 @@ bool FLayeredMove_SyncMontageRootMotion::GenerateMove(const FMoverTickStartData&
 	 * but there's no public read access to it in 5.5
 	 */
 	FTransform MeshRelativeTransform = FTransform::Identity;
-	  nullptr;
+	
 	if (const UAbilitySystemComponent* ASC = UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(MoverComp->GetOwner()))
 	{
 		if ( const UNpAbilitySystemComponent* NpAsc = Cast<UNpAbilitySystemComponent>(ASC))
